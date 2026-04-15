@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Results</title>
+
+    <style>
+        body {
+            font-family: 'Segoe UI';
+            background: linear-gradient(135deg, #141e30, #243b55);
+            color: white;
+        }
+
+        .section {
+            margin: 30px;
+        }
+
+        .card {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            margin: 15px;
+            border-radius: 10px;
+        }
+
+        .selected {
+            border-left: 5px solid #00ffcc;
+        }
+
+        .rejected {
+            border-left: 5px solid #ff4d4d;
+        }
+
+        /* 🔵 DOWNLOAD BUTTON */
+        .download-btn {
+            background: linear-gradient(45deg, #00c6ff, #0072ff);
+            color: white;
+            padding: 12px 25px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .download-btn:hover {
+            transform: scale(1.08);
+            background: linear-gradient(45deg, #0072ff, #00c6ff);
+            box-shadow: 0 0 20px #00c6ff;
+        }
+
+        /* 🟣 MAIN NAV */
+        .nav-btn {
+            margin: 5px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            background: #6c5ce7;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn:hover {
+    transform: scale(1.1);
+    background: #5a4bd6;
+    box-shadow: 0 0 15px #6c5ce7;  /* 🟣 glow */
+}
+
+        /* 🟢 SUB BUTTONS */
+        .sub-btn {
+            margin: 5px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            background: #00b894;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .sub-btn:hover {
+            transform: scale(1.1);
+            background: #019875;
+        }
+
+        /* 🟠 CHART BUTTONS */
+        .chart-btn {
+            margin: 5px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            background: #e17055;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .chart-btn:hover {
+    transform: scale(1.1);
+    background: #d35400;
+    box-shadow: 0 0 15px #e17055;  /* 🟠 glow */
+}
+    </style>
+</head>
+
+<body>
+
+<h1 style="text-align:center;">
+AI Hiring Intelligence Dashboard
+</h1>
+
+<h2 style="text-align:center;">
+Total: {{ total }} |
+Selected: {{ selected_count }} |
+Rejected: {{ rejected_count }}
+</h2>
+
+<!-- DOWNLOAD FIRST -->
+<div style="text-align:center; margin:30px;">
+    <a href="/static/selected_candidates.csv" download style="text-decoration:none;">
+        <button class="download-btn">
+            📄 Download Selected Candidates
+        </button>
+    </a>
+</div>
+
+<!-- 🟣 MAIN NAV -->
+<div style="text-align:center; margin:20px;">
+    <button onclick="showSection('dashboard')" class="nav-btn">Hiring Dashboard</button>
+    <button onclick="showSection('bias')" class="nav-btn">Bias Comparison</button>
+</div>
+
+<!-- ================= DASHBOARD ================= -->
+<div id="dashboard-section">
+
+    <!-- 🟢 SUB NAV -->
+    <div style="text-align:center; margin:20px;">
+        <button onclick="showSub('selected')" class="sub-btn">✅ Selected</button>
+        <button onclick="showSub('rejected')" class="sub-btn">❌ Rejected</button>
+    </div>
+
+    <!-- SELECTED -->
+    <div id="selected-section">
+        <h2 style="text-align:center; color:#00ffcc;">
+            ✅ Selected Candidates ✅
+        </h2>
+
+        {% for r in selected %}
+        <div class="card selected">
+            <h3>{{ r.name }} ({{ r.gender }})</h3>
+
+            <p>📧 Email: {{ r.email }}</p>
+            <p>📞 Phone: {{ r.phone }}</p>
+            <p>Experience: {{ r.experience }} years</p>
+
+            <p><b>Biased Score:</b> {{ r.biased_score }}</p>
+            <p><b>Fair Score:</b> {{ r.fair_score }}</p>
+
+            {% if r.bias_changed %}
+                <p style="color:#00c6ff;">Bias Adjustment Applied</p>
+            {% else %}
+                <p style="color:#00ffcc;">No Bias Influence</p>
+            {% endif %}
+
+            <p>Matched: {{ r.matched_skills }}</p>
+            <p>Missing: {{ r.missing_skills }}</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- REJECTED -->
+    <div id="rejected-section" style="display:none;">
+        <h2 style="text-align:center; color:#ff4d4d;">
+            ❌ Rejected Candidates ❌
+        </h2>
+
+        {% for r in rejected %}
+        <div class="card rejected">
+            <h3>{{ r.name }} ({{ r.gender }})</h3>
+
+            <p>📧 Email: {{ r.email }}</p>
+            <p>📞 Phone: {{ r.phone }}</p>
+            <p>Experience: {{ r.experience }} years</p>
+
+            <p><b>Biased Score:</b> {{ r.biased_score }}</p>
+            <p><b>Fair Score:</b> {{ r.fair_score }}</p>
+
+            {% if r.bias_changed %}
+                <p style="color:#00c6ff;">Bias Adjustment Applied</p>
+            {% else %}
+                <p style="color:#00ffcc;">No Bias Influence</p>
+            {% endif %}
+
+            <p>Matched: {{ r.matched_skills }}</p>
+            <p>Missing: {{ r.missing_skills }}</p>
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+
+<!-- ================= BIAS ================= -->
+<div id="bias-section" style="display:none;">
+
+    <!-- 🟠 CHART NAV -->
+    <div style="text-align:center; margin:20px;">
+        <button onclick="showSub('pie')" class="chart-btn">📉 Distribution</button>
+        <button onclick="showSub('chart')" class="chart-btn">📊 Bias Charts</button>
+    </div>
+
+    <div id="pie-section">
+        <h2 style="text-align:center;">Selection Distribution</h2>
+        <img src="/static/pie.png" width="400" style="display:block;margin:auto;">
+    </div>
+
+    <div id="chart-section" style="display:none;">
+        <h3 style="text-align:center;">Before Bias Mitigation</h3>
+        <img src="/static/biased.png" width="400" style="display:block;margin:auto;">
+
+        <h3 style="text-align:center;">After Bias Mitigation</h3>
+        <img src="/static/fair.png" width="400" style="display:block;margin:auto;">
+    </div>
+
+</div>
+
+<script>
+function showSection(section) {
+    document.getElementById("dashboard-section").style.display = "none";
+    document.getElementById("bias-section").style.display = "none";
+
+    if (section === "dashboard") {
+        document.getElementById("dashboard-section").style.display = "block";
+    } else {
+        document.getElementById("bias-section").style.display = "block";
+    }
+}
+
+function showSub(type) {
+    document.getElementById("selected-section").style.display = "none";
+    document.getElementById("rejected-section").style.display = "none";
+    document.getElementById("pie-section").style.display = "none";
+    document.getElementById("chart-section").style.display = "none";
+
+    if (type === "selected") {
+        document.getElementById("selected-section").style.display = "block";
+    } else if (type === "rejected") {
+        document.getElementById("rejected-section").style.display = "block";
+    } else if (type === "pie") {
+        document.getElementById("pie-section").style.display = "block";
+    } else if (type === "chart") {
+        document.getElementById("chart-section").style.display = "block";
+    }
+}
+</script>
+
+</body>
+</html>
+
+
+<!--<!DOCTYPE html>-->
+<!--<html>-->
+<!--<head>-->
+<!--    <title>Results</title>-->
+
+<!--    <style>-->
+<!--        body {-->
+<!--            font-family: 'Segoe UI';-->
+<!--            background: linear-gradient(135deg, #141e30, #243b55);-->
+<!--            color: white;-->
+<!--        }-->
+
+<!--        .section {-->
+<!--            margin: 30px;-->
+<!--        }-->
+
+<!--        .card {-->
+<!--            background: rgba(255,255,255,0.1);-->
+<!--            padding: 15px;-->
+<!--            margin: 15px;-->
+<!--            border-radius: 10px;-->
+<!--        }-->
+
+<!--        .selected {-->
+<!--            border-left: 5px solid #00ffcc;-->
+<!--        }-->
+
+<!--        .rejected {-->
+<!--            border-left: 5px solid #ff4d4d;-->
+<!--        }-->
+
+<!--        .download-btn {-->
+<!--            background: linear-gradient(45deg, #00c6ff, #0072ff);-->
+<!--            color: white;-->
+<!--            padding: 12px 25px;-->
+<!--            font-size: 16px;-->
+<!--            border: none;-->
+<!--            border-radius: 8px;-->
+<!--            cursor: pointer;-->
+<!--            transition: 0.3s ease;-->
+<!--            box-shadow: 0 4px 15px rgba(0,0,0,0.3);-->
+<!--        }-->
+
+<!--        .download-btn:hover {-->
+<!--            transform: scale(1.08);-->
+<!--            background: linear-gradient(45deg, #0072ff, #00c6ff);-->
+<!--            box-shadow: 0 0 20px #00c6ff;-->
+<!--        }-->
+
+<!--        .nav-btn {-->
+<!--            margin: 5px;-->
+<!--            padding: 10px 20px;-->
+<!--            border: none;-->
+<!--            border-radius: 6px;-->
+<!--            background: #00c6ff;-->
+<!--            color: white;-->
+<!--            cursor: pointer;-->
+<!--            transition: 0.3s;-->
+<!--        }-->
+
+<!--        .nav-btn:hover {-->
+<!--            transform: scale(1.1);-->
+<!--        }-->
+<!--    </style>-->
+<!--</head>-->
+
+<!--<body>-->
+
+<!--<h1 style="text-align:center;">-->
+<!--AI Hiring Intelligence Dashboard-->
+<!--</h1>-->
+
+<!--<h2 style="text-align:center;">-->
+<!--Total: {{ total }} |-->
+<!--Selected: {{ selected_count }} |-->
+<!--Rejected: {{ rejected_count }}-->
+<!--</h2>-->
+
+<!--&lt;!&ndash; MAIN NAVIGATION &ndash;&gt;-->
+<!--<div style="text-align:center; margin:20px;">-->
+<!--    <button onclick="showSection('dashboard')" class="nav-btn">Hiring Dashboard</button>-->
+<!--    <button onclick="showSection('bias')" class="nav-btn">Bias Comparison</button>-->
+<!--</div>-->
+
+<!--&lt;!&ndash; DOWNLOAD BUTTON &ndash;&gt;-->
+<!--<div style="text-align:center; margin:30px;">-->
+<!--    <a href="/static/selected_candidates.csv" download style="text-decoration:none;">-->
+<!--        <button class="download-btn">-->
+<!--            📄 Download Selected Candidates-->
+<!--        </button>-->
+<!--    </a>-->
+<!--</div>-->
+
+<!--&lt;!&ndash; ================= DASHBOARD SECTION ================= &ndash;&gt;-->
+<!--<div id="dashboard-section">-->
+
+<!--    &lt;!&ndash; SUB NAV &ndash;&gt;-->
+<!--    <div style="text-align:center; margin:20px;">-->
+<!--        <button onclick="showSub('selected')" class="nav-btn">Selected</button>-->
+<!--        <button onclick="showSub('rejected')" class="nav-btn">Rejected</button>-->
+<!--    </div>-->
+
+<!--    &lt;!&ndash;  SELECTED &ndash;&gt;-->
+<!--    <div id="selected-section">-->
+<!--        <h2 style="text-align:center; color:#00ffcc;">-->
+<!--            ✅ Selected Candidates ✅-->
+<!--        </h2>-->
+
+<!--        {% for r in selected %}-->
+<!--        <div class="card selected">-->
+<!--            <h3>{{ r.name }} ({{ r.gender }})</h3>-->
+
+<!--            <p>📧 Email: {{ r.email }}</p>-->
+<!--            <p>📞 Phone: {{ r.phone }}</p>-->
+<!--            <p>   Experience: {{ r.experience }} years</p>-->
+
+<!--            <p><b>   Biased Score:</b> {{ r.biased_score }}</p>-->
+<!--            <p><b>   Fair Score:</b> {{ r.fair_score }}</p>-->
+
+<!--            {% if r.bias_changed %}-->
+<!--                <p style="color:#00c6ff;">   Bias Adjustment Applied</p>-->
+<!--            {% else %}-->
+<!--                <p style="color:#00ffcc;">   No Bias Influence</p>-->
+<!--            {% endif %}-->
+
+<!--            <p>Matched: {{ r.matched_skills }}</p>-->
+<!--            <p>Missing: {{ r.missing_skills }}</p>-->
+<!--        </div>-->
+<!--        {% endfor %}-->
+<!--    </div>-->
+
+<!--    &lt;!&ndash; REJECTED &ndash;&gt;-->
+<!--    <div id="rejected-section" style="display:none;">-->
+<!--        <h2 style="text-align:center; color:#ff4d4d;">-->
+<!--           ❌ Rejected Candidates ❌-->
+<!--        </h2>-->
+
+<!--        {% for r in rejected %}-->
+<!--        <div class="card rejected">-->
+<!--            <h3>{{ r.name }} ({{ r.gender }})</h3>-->
+
+<!--            <p>📧 Email: {{ r.email }}</p>-->
+<!--            <p>📞 Phone: {{ r.phone }}</p>-->
+<!--            <p>   Experience: {{ r.experience }} years</p>-->
+
+<!--            <p><b>   Biased Score:</b> {{ r.biased_score }}</p>-->
+<!--            <p><b>   Fair Score:</b> {{ r.fair_score }}</p>-->
+
+<!--            {% if r.bias_changed %}-->
+<!--                <p style="color:#00c6ff;">Bias Adjustment Applied</p>-->
+<!--            {% else %}-->
+<!--                <p style="color:#00ffcc;">No Bias Influence</p>-->
+<!--            {% endif %}-->
+
+<!--            <p>Matched: {{ r.matched_skills }}</p>-->
+<!--            <p>Missing: {{ r.missing_skills }}</p>-->
+<!--        </div>-->
+<!--        {% endfor %}-->
+<!--    </div>-->
+
+<!--</div>-->
+
+<!--&lt;!&ndash; ================= BIAS SECTION ================= &ndash;&gt;-->
+<!--<div id="bias-section" style="display:none;">-->
+
+<!--    <div style="text-align:center; margin:20px;">-->
+<!--        <button onclick="showSub('pie')" class="nav-btn">Selection Distribution</button>-->
+<!--        <button onclick="showSub('chart')" class="nav-btn">Bias Charts</button>-->
+<!--    </div>-->
+
+<!--    &lt;!&ndash; PIE &ndash;&gt;-->
+<!--    <div id="pie-section">-->
+<!--        <h2 style="text-align:center;">Selection Distribution</h2>-->
+<!--        <img src="/static/pie.png" width="400" style="display:block;margin:auto;">-->
+<!--    </div>-->
+
+<!--    &lt;!&ndash; CHARTS &ndash;&gt;-->
+<!--    <div id="chart-section" style="display:none;">-->
+<!--        <h3 style="text-align:center;">Before Bias Mitigation</h3>-->
+<!--        <img src="/static/biased.png" width="400" style="display:block;margin:auto;">-->
+
+<!--        <h3 style="text-align:center;">After Bias Mitigation</h3>-->
+<!--        <img src="/static/fair.png" width="400" style="display:block;margin:auto;">-->
+<!--    </div>-->
+
+<!--</div>-->
+
+<!--&lt;!&ndash; ================= JAVASCRIPT ================= &ndash;&gt;-->
+<!--<script>-->
+<!--function showSection(section) {-->
+<!--    document.getElementById("dashboard-section").style.display = "none";-->
+<!--    document.getElementById("bias-section").style.display = "none";-->
+
+<!--    if (section === "dashboard") {-->
+<!--        document.getElementById("dashboard-section").style.display = "block";-->
+<!--    } else {-->
+<!--        document.getElementById("bias-section").style.display = "block";-->
+<!--    }-->
+<!--}-->
+
+<!--function showSub(type) {-->
+<!--    document.getElementById("selected-section").style.display = "none";-->
+<!--    document.getElementById("rejected-section").style.display = "none";-->
+<!--    document.getElementById("pie-section").style.display = "none";-->
+<!--    document.getElementById("chart-section").style.display = "none";-->
+
+<!--    if (type === "selected") {-->
+<!--        document.getElementById("selected-section").style.display = "block";-->
+<!--    } else if (type === "rejected") {-->
+<!--        document.getElementById("rejected-section").style.display = "block";-->
+<!--    } else if (type === "pie") {-->
+<!--        document.getElementById("pie-section").style.display = "block";-->
+<!--    } else if (type === "chart") {-->
+<!--        document.getElementById("chart-section").style.display = "block";-->
+<!--    }-->
+<!--}-->
+<!--</script>-->
+
+<!--</body>-->
+<!--</html>-->
+

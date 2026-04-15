@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>FairHireX</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI';
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            color: white;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            text-align: center;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+            animation: fadeIn 1.5s ease-in-out;
+        }
+
+        h1 {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+
+        p {
+            opacity: 0.8;
+        }
+
+        input {
+            margin-top: 20px;
+            padding: 10px;
+        }
+
+        button {
+            margin-top: 20px;
+            padding: 12px 25px;
+            background: #00c6ff;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background: #0072ff;
+            transform: scale(1.1);
+        }
+
+        @keyframes fadeIn {
+            from {opacity: 0; transform: translateY(30px);}
+            to {opacity: 1; transform: translateY(0);}
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="glass">
+    <h1>FairHireX</h1>
+    <p>AI-Powered Bias-Free Hiring Platform</p>
+
+    <form action="/upload" method="post" enctype="multipart/form-data">
+        <input type="text" name="skills" placeholder="Enter skills (comma separated)" required><br><br>
+        <input type="number" name="experience" placeholder="Minimum experience (years)" required><br><br>
+        <input type="file" name="resumes" multiple accept=".txt,.pdf,.docx,.jpg,.png,.csv">
+        <button type="submit">Upload & Analyze</button>
+    </form>
+</div>
+
+</body>
+</html>

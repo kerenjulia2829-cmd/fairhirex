@@ -1,0 +1,8 @@
+name,gender,biased_score,fair_score,biased_decision,fair_decision,matched_skills,missing_skills,email,phone,experience,bias_changed
+Charlie Brown,Unknown,7,7,Selected,Selected,"['python', 'sql']","['data', 'java']",charlie@gmail.com,9876543212,3,False
+Alice Johnson,Unknown,8,6,Selected,Selected,"['python', 'sql']","['data', 'java']",alice@gmail.com,9876543210,2,True
+Ivy Chen,Unknown,6,6,Selected,Selected,"['python', 'sql']","['data', 'java']",ivy@gmail.com,9876543218,2,False
+Grace Kim,Unknown,5,5,Selected,Selected,"['python', 'sql']","['data', 'java']",grace@gmail.com,9876543216,1,False
+Jack Ryan,Unknown,3,5,Rejected,Selected,"['java', 'sql']","['python', 'data']",jack@gmail.com,9876543219,1,True
+Jane Doe,Unknown,2,4,Rejected,Selected,"['python', 'java']","['data', 'sql']",janedoe@gmail.com,Not found,0,True
+Keren,Unknown,6,4,Selected,Selected,"['python', 'sql']","['data', 'java']",kerenjulia2829@gmail.comEmail,7305813499,0,True
