@@ -30,7 +30,12 @@
 import os
 import re
 import pytesseract
-# pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+import pytesseract
+
+try:
+    pytesseract.get_tesseract_version()
+except:
+    pass
 from docx import Document
 from PIL import Image
 import pytesseract
