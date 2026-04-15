@@ -9,6 +9,7 @@ import pandas as pd
 app = Flask(__name__)
 UPLOAD_FOLDER = "resumes"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 
 @app.route("/")
