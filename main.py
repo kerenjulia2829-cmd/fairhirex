@@ -1,81 +1,105 @@
-# import pandas as pd
-#
-# # Sample job requirement
-# job_skills = {"python", "machine learning", "sql"}
-#
-# # Sample resumes (we will later replace with real parsing)
-# resumes = [
-#     {"name": "Alice", "skills": {"python", "sql"}, "experience": 2},
-#     {"name": "Bob", "skills": {"java", "c++"}, "experience": 3},
-#     {"name": "Charlie", "skills": {"python", "machine learning", "sql"}, "experience": 1}
-# ]
-#
-# def calculate_score(candidate):
-#     skill_match = len(candidate["skills"].intersection(job_skills))
-#     experience_score = candidate["experience"]
-#
-#     total_score = skill_match * 2 + experience_score
-#     return total_score
-#
-# # Evaluate candidates
-# for candidate in resumes:
-#     score = calculate_score(candidate)
-#     decision = "Selected" if score >= 5 else "Rejected"
-#
-#     print(f"Name: {candidate['name']}")
-#     print(f"Score: {score}")
-#     print(f"Decision: {decision}")
-#     print("-" * 30)
-
 import os
 import re
+import pandas as pd
 import pytesseract
-import pytesseract
+from docx import Document
+from PIL import Image
+from PyPDF2 import PdfReader
 
+# Safe OCR (won't crash if tesseract missing)
 try:
     pytesseract.get_tesseract_version()
 except:
     pass
-from docx import Document
-from PIL import Image
-import pytesseract
+
+
+# =========================
+# FILE READ FUNCTIONS
+# =========================
+
 def read_docx(file_path):
     doc = Document(file_path)
     text = ""
-
     for para in doc.paragraphs:
         text += para.text + "\n"
-
     return text
+
+
 def read_image(file_path):
-    img = Image.open(file_path)
-    text = pytesseract.image_to_string(img)
-    return text
-from PyPDF2 import PdfReader
+    try:
+        img = Image.open(file_path)
+        return pytesseract.image_to_string(img)
+    except:
+        return ""
+
+
 def read_pdf(file_path):
-    reader = PdfReader(file_path)
     text = ""
-
-    for page in reader.pages:
-        text += page.extract_text()
-
+    try:
+        reader = PdfReader(file_path)
+        for page in reader.pages:
+            text += page.extract_text() or ""
+    except:
+        pass
     return text
 
-# Job requirement
+
+# =========================
+# DATASET SUPPORT
+# =========================
+
+def read_dataset(file_path):
+    data = []
+
+    try:
+        if file_path.endswith(".csv"):
+            df = pd.read_csv(file_path)
+        elif file_path.endswith(".xlsx"):
+            df = pd.read_excel(file_path)
+        else:
+            return data
+
+        for _, row in df.iterrows():
+            skills = set(str(row.get("Skills", "")).lower().split(","))
+
+            data.append({
+                "name": str(row.get("Name", "Unknown")),
+                "gender": "Unknown",
+                "skills": skills,
+                "experience": int(row.get("Experience", 0)),
+                "email": row.get("Email", "Not found"),
+                "phone": str(row.get("Phone", "Not found"))
+            })
+
+    except Exception as e:
+        print("Dataset error:", e)
+
+    return data
+
+
+# =========================
+# SKILL EXTRACTION
+# =========================
+
 job_skills = {"python", "machine learning", "sql"}
+
 SKILL_KEYWORDS = [
     "python", "machine learning", "sql",
     "java", "c++", "data analysis", "deep learning"
 ]
+
+
 def extract_skills(text):
     text = text.lower()
-    found_skills = set()
+    found = set()
 
     for skill in SKILL_KEYWORDS:
         if skill in text:
-            found_skills.add(skill)
+            found.add(skill)
 
-    return found_skills
+    return found
+
+
 def extract_email(text):
     match = re.search(r"\S+@\S+", text)
     return match.group() if match else "Not found"
@@ -90,54 +114,47 @@ def extract_experience(text):
     match = re.search(r"(\d+)\s+years", text.lower())
     return int(match.group(1)) if match else 0
 
+
+# =========================
+# MAIN RESUME READER
+# =========================
+
 def read_resumes(folder_path):
     resumes = []
 
     for file in os.listdir(folder_path):
         file_path = os.path.join(folder_path, file)
 
-        # TXT
-        if file.endswith(".txt"):
-            with open(file_path, "r", encoding="utf-8") as f:
-                text = f.read()
+        # DATASET FILES
+        if file.endswith((".csv", ".xlsx")):
+            resumes.extend(read_dataset(file_path))
+            continue
 
-        # PDF
-        elif file.endswith(".pdf"):
-            text = read_pdf(file_path)
+        text = ""
 
-        # DOCX
-        elif file.endswith(".docx"):
-            text = read_docx(file_path)
+        try:
+            if file.endswith(".txt"):
+                with open(file_path, "r", encoding="utf-8") as f:
+                    text = f.read()
 
-        # IMAGE (JPG / PNG)
-        elif file.endswith((".jpg", ".png", ".jpeg")):
-            text = read_image(file_path)
+            elif file.endswith(".pdf"):
+                text = read_pdf(file_path)
 
+            elif file.endswith(".docx"):
+                text = read_docx(file_path)
 
-        elif file.endswith(".csv"):
+            elif file.endswith((".jpg", ".png", ".jpeg")):
+                text = read_image(file_path)
 
-            import pandas as pd
+            else:
+                continue
 
-            df = pd.read_csv(file_path)
+        except Exception as e:
+            print(f"Error reading {file}: {e}")
+            continue
 
-            for _, row in df.iterrows():
-                resumes.append({
-
-                    "name": str(row.get("name", "Unknown")),
-
-                    "gender": "Unknown",
-
-                    "skills": set(str(row.get("skills", "")).lower().split(",")),
-
-                    "experience": int(row.get("experience", 0)),
-
-                    "email": row.get("email", "Not found"),
-
-                    "phone": str(row.get("phone", "Not found"))
-
-                })
-
-            continue  # ✅ VERY IMPORTANT (skip rest of loop)
+        if not text:
+            continue
 
         skills = extract_skills(text)
 
@@ -148,101 +165,75 @@ def read_resumes(folder_path):
             "experience": extract_experience(text),
             "email": extract_email(text),
             "phone": extract_phone(text)
-
         })
 
     return resumes
-# Scoring function
+
+
+# =========================
+# SCORING FUNCTIONS
+# =========================
+
 def evaluate_candidate(candidate):
-    matched_skills = candidate["skills"].intersection(job_skills)
-    missing_skills = job_skills - candidate["skills"]
+    matched = candidate["skills"].intersection(job_skills)
 
-    skill_score = len(matched_skills) * 2
-    experience_score = candidate["experience"]
+    score = len(matched) * 2 + candidate["experience"]
 
-    total_score = skill_score + experience_score
-
-    # Bias (intentional for demo)
+    # Bias (intentional)
     if candidate["gender"].lower() == "male":
-        total_score += 1
+        score += 1
 
-    decision = "Selected" if total_score >= 5 else "Rejected"
+    decision = "Selected" if score >= 5 else "Rejected"
 
     return {
-        "score": total_score,
+        "score": score,
         "decision": decision,
-        "matched_skills": matched_skills,
-        "missing_skills": missing_skills,
+        "matched_skills": matched,
+        "missing_skills": job_skills - candidate["skills"],
         "experience": candidate["experience"],
         "gender": candidate["gender"]
     }
 
-#new function-no bias
+
 def evaluate_candidate_fair(candidate, job_skills, min_exp):
-    matched_skills = candidate["skills"].intersection(job_skills)
-    missing_skills = job_skills - candidate["skills"]
+    matched = candidate["skills"].intersection(job_skills)
 
-    skill_score = len(matched_skills) * 2
-    experience_score = candidate["experience"]
+    score = len(matched) * 2 + candidate["experience"]
 
-    total_score = skill_score + experience_score
+    # Apply experience filter only if given
+    if min_exp != 0 and candidate["experience"] < min_exp:
+        score -= 2
 
-    # NEW: Experience condition
-    # NEW LOGIC
-    if min_exp != 0:  # only apply experience filter if user gives value
-        if experience_score < min_exp:
-            total_score -= 2
-
-    if len(matched_skills) >= 2:
-        decision = "Selected"
-    else:
-        decision = "Rejected"
+    decision = "Selected" if len(matched) >= 2 else "Rejected"
 
     return {
-        "score": total_score,
+        "score": score,
         "decision": decision,
-        "matched_skills": matched_skills,
-        "missing_skills": missing_skills,
+        "matched_skills": matched,
+        "missing_skills": job_skills - candidate["skills"],
         "experience": candidate["experience"],
         "gender": candidate["gender"]
     }
 
-# MAIN
-resumes = read_resumes("resumes")
+
+# =========================
+# TEST RUN (LOCAL)
+# =========================
+
 if __name__ == "__main__":
     resumes = read_resumes("resumes")
 
     selected = []
-    rejected = []
 
-    for candidate in resumes:
-        biased = evaluate_candidate(candidate)
-        fair = evaluate_candidate_fair(candidate, job_skills, 0)
-
-        data = {
-            "name": candidate["name"],
-            "gender": candidate["gender"],
-            "biased_score": biased["score"],
-            "fair_score": fair["score"],
-            "biased_decision": biased["decision"],
-            "fair_decision": fair["decision"],
-            "matched_skills": list(fair["matched_skills"]),
-            "missing_skills": list(fair["missing_skills"])
-        }
+    for c in resumes:
+        fair = evaluate_candidate_fair(c, job_skills, 0)
 
         if fair["decision"] == "Selected":
-            selected.append(data)
-        else:
-            rejected.append(data)
+            selected.append({
+                "name": c["name"],
+                "score": fair["score"]
+            })
 
-    selected = sorted(selected, key=lambda x: x["fair_score"], reverse=True)
-
-    print("\n===== FINAL RANKING (FAIR MODEL) =====\n")
-
-    rank = 1
-    for r in selected:
-        print(f"Rank {rank}: {r['name']} ({r['gender']})")
-        print(f"Score: {r['fair_score']}")
-        print(f"Decision: {r['fair_decision']}")
-        print("-" * 40)
-        rank += 1
+    print("\n===== FINAL RANKING =====\n")
+    for i, r in enumerate(sorted(selected, key=lambda x: x["score"], reverse=True), 1):
+        print(f"{i}. {r['name']} - {r['score']}")
